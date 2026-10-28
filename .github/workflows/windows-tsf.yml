@@ -22,7 +22,31 @@ jobs:
         run: cmake -S native/Srabon.Tsf -B build/native/Srabon.Tsf -A x64
 
       - name: Build x64 TSF DLL, unit tests, and profile activator
-        run: cmake --build build/native/Srabon.Tsf --config Release --parallel
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $log = Join-Path $PWD 'build/native/Srabon.Tsf/build.log'
+          cmake --build build/native/Srabon.Tsf --config Release --parallel --verbose 2>&1 | Tee-Object -FilePath $log
+          $buildExit = $LASTEXITCODE
+          if ($buildExit -ne 0) {
+            $diagnostics = Select-String -Path $log -Pattern '(?i)(error|fatal|failed|undefined reference)' | Select-Object -Last 30
+            if ($diagnostics) {
+              foreach ($line in $diagnostics) { Write-Host "::error title=Native TSF build::$($line.Line)" }
+            } else {
+              Get-Content $log -Tail 80 | ForEach-Object { Write-Host "::error title=Native TSF build::$_" }
+            }
+            exit $buildExit
+          }
+
+      - name: Upload build diagnostics if the job failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: srabon-tsf-build-diagnostics
+          path: build/native/Srabon.Tsf/build.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Run native converter regression tests
         run: ctest --test-dir build/native/Srabon.Tsf -C Release --output-on-failure

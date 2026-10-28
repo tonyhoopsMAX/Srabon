@@ -101,6 +101,10 @@ public:
     STDMETHODIMP OnSetFocus(BOOL) override { return S_OK; }
     STDMETHODIMP OnTestKeyDown(ITfContext*, WPARAM key, LPARAM, BOOL* eaten) override {
         if (!eaten) return E_POINTER;
+        if ((GetKeyState(VK_CONTROL) & 0x8000) != 0 || (GetKeyState(VK_MENU) & 0x8000) != 0) {
+            *eaten = FALSE;
+            return S_OK;
+        }
         *eaten = IsRomanKey(key) || (HasComposition() && IsCompositionControl(key));
         return S_OK;
     }

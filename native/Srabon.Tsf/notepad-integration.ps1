@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms
 
-$dll = Join-Path $PWD 'build/native/Srabon.Tsf/Srabon.Tsf.dll'
-$activator = Join-Path $PWD 'build/native/Srabon.Tsf/Srabon.Tsf.Activate.exe'
+$dll = Join-Path $PWD 'build/native/Srabon.Tsf/Release/Srabon.Tsf.dll'
+$activator = Join-Path $PWD 'build/native/Srabon.Tsf/Release/Srabon.Tsf.Activate.exe'
 if (-not (Test-Path $dll)) { throw "TSF DLL missing: $dll" }
 if (-not (Test-Path $activator)) { throw "Profile activator missing: $activator" }
 

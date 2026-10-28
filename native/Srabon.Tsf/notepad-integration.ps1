@@ -21,6 +21,12 @@ if (-not (Test-Path $activator)) { throw "Profile activator missing: $activator"
 $registered = $false
 $notepad = $null
 try {
+    $languages = Get-WinUserLanguageList
+    if (-not ($languages | Where-Object { $_.LanguageTag -eq 'bn-BD' })) {
+        $languages.Add((New-WinUserLanguageList -Language 'bn-BD')[0])
+        Set-WinUserLanguageList -LanguageList $languages -Force
+    }
+
     $registration = Start-Process -FilePath "$env:WINDIR\System32\regsvr32.exe" -ArgumentList @('/s', ('"{0}"' -f $dll)) -PassThru -Wait -WindowStyle Hidden
     if ($registration.ExitCode -ne 0) { throw "Srabon TSF registration failed (regsvr32 exit $($registration.ExitCode))." }
     $registered = $true

@@ -46,6 +46,11 @@ try {
     }
     Write-Host "Notepad TSF acceptance passed: $actual"
 }
+catch {
+    $message = $_.Exception.Message -replace '%', '%25' -replace "`r", '%0D' -replace "`n", '%0A'
+    Write-Host "::error title=Notepad TSF integration::$message"
+    throw
+}
 finally {
     Get-Process -Name notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     if ($registered) {

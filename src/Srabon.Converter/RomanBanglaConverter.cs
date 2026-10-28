@@ -60,7 +60,7 @@ public static class RomanBanglaConverter
         var tokens = Tokenize(input);
         if (tokens.Count == 0) return [string.Empty];
 
-        var variants = new List<Option[]> { [] };
+        var variants = new List<Option[]> { Array.Empty<Option>() };
         foreach (var token in tokens)
         {
             var expanded = new List<Option[]>(Math.Min(maxCandidates, variants.Count * token.Options.Count));

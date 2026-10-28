@@ -58,6 +58,30 @@ jobs:
           if (-not (Test-Path $exe)) { throw "Published executable missing: $exe" }
           Get-Item $exe | Format-List FullName, Length
 
+      - name: Smoke-test native desktop window startup
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "artifacts/publish/Srabon.exe"
+          $process = Start-Process -FilePath $exe -PassThru
+          $windowFound = $false
+          try {
+            for ($attempt = 0; $attempt -lt 20; $attempt++) {
+              Start-Sleep -Milliseconds 500
+              $process.Refresh()
+              if ($process.HasExited) { throw "Srabon exited before opening its desktop window (exit $($process.ExitCode))." }
+              if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
+                $windowFound = $true
+                Write-Host "Srabon desktop window opened: $($process.MainWindowTitle)"
+                break
+              }
+            }
+            if (-not $windowFound) { throw "Srabon process stayed alive but did not expose a desktop main window." }
+          }
+          finally {
+            $process.Refresh()
+            if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
+          }
+
       - name: Upload Windows executable artifact
         id: upload
         uses: actions/upload-artifact@v4

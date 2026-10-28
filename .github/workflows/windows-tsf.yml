@@ -72,4 +72,26 @@ jobs:
 
       - name: Exercise registration, activation, typing, and candidate commit in Notepad
         shell: pwsh
-        run: ./native/Srabon.Tsf/notepad-integration.ps1
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $log = Join-Path $PWD 'build/native/Srabon.Tsf/notepad-test.log'
+          & pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File native/Srabon.Tsf/notepad-integration.ps1 2>&1 | Tee-Object -FilePath $log
+          $testExit = $LASTEXITCODE
+          if ($testExit -ne 0) {
+            $lines = Get-Content $log -Tail 30
+            foreach ($line in $lines) {
+              $message = [string]$line -replace '%', '%25' -replace "`r", '%0D' -replace "`n", '%0A'
+              Write-Host "::error title=Notepad TSF integration::$message"
+            }
+            exit $testExit
+          }
+
+      - name: Upload Notepad integration diagnostics if the job failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: srabon-tsf-notepad-diagnostics
+          path: build/native/Srabon.Tsf/notepad-test.log
+          if-no-files-found: ignore
+          retention-days: 7

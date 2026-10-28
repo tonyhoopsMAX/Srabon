@@ -17,8 +17,8 @@ $installedDll = Join-Path $destination 'Srabon.Tsf.dll'
 Copy-Item -LiteralPath $DllPath -Destination $installedDll -Force
 
 try {
-    & "$env:WINDIR\System32\regsvr32.exe" /s $installedDll
-    if ($LASTEXITCODE -ne 0) { throw "TSF profile registration failed (regsvr32 exit $LASTEXITCODE)." }
+    $registration = Start-Process -FilePath "$env:WINDIR\System32\regsvr32.exe" -ArgumentList @('/s', ('"{0}"' -f $installedDll)) -PassThru -Wait -WindowStyle Hidden
+    if ($registration.ExitCode -ne 0) { throw "TSF profile registration failed (regsvr32 exit $($registration.ExitCode))." }
     Write-Host "Srabon Bangla phonetic TSF profile installed for $([Environment]::UserName)."
     Write-Host 'Select Srabon Bangla Phonetic from the Windows input-language switcher (Win+Space).'
 } catch {

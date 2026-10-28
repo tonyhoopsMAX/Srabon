@@ -7,8 +7,8 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 
 $installedDll = Join-Path $env:ProgramFiles 'Srabon\TSF\Srabon.Tsf.dll'
 if (Test-Path -LiteralPath $installedDll) {
-    & "$env:WINDIR\System32\regsvr32.exe" /u /s $installedDll
-    if ($LASTEXITCODE -ne 0) { throw "TSF profile removal failed (regsvr32 exit $LASTEXITCODE)." }
+    $unregistration = Start-Process -FilePath "$env:WINDIR\System32\regsvr32.exe" -ArgumentList @('/u', '/s', ('"{0}"' -f $installedDll)) -PassThru -Wait -WindowStyle Hidden
+    if ($unregistration.ExitCode -ne 0) { throw "TSF profile removal failed (regsvr32 exit $($unregistration.ExitCode))." }
     try {
         Remove-Item -LiteralPath (Split-Path -Parent $installedDll) -Recurse -Force
     } catch {

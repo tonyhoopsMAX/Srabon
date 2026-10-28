@@ -9,8 +9,8 @@ if (-not (Test-Path $activator)) { throw "Profile activator missing: $activator"
 $registered = $false
 $notepad = $null
 try {
-    & "$env:WINDIR\System32\regsvr32.exe" /s $dll
-    if ($LASTEXITCODE -ne 0) { throw "Srabon TSF registration failed (regsvr32 exit $LASTEXITCODE)." }
+    $registration = Start-Process -FilePath "$env:WINDIR\System32\regsvr32.exe" -ArgumentList @('/s', ('"{0}"' -f $dll)) -PassThru -Wait -WindowStyle Hidden
+    if ($registration.ExitCode -ne 0) { throw "Srabon TSF registration failed (regsvr32 exit $($registration.ExitCode))." }
     $registered = $true
 
     $notepad = Start-Process -FilePath "$env:WINDIR\System32\notepad.exe" -PassThru
@@ -54,7 +54,7 @@ catch {
 finally {
     Get-Process -Name notepad -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     if ($registered) {
-        & "$env:WINDIR\System32\regsvr32.exe" /u /s $dll
-        if ($LASTEXITCODE -ne 0) { throw "Srabon TSF unregistration failed (regsvr32 exit $LASTEXITCODE)." }
+        $unregistration = Start-Process -FilePath "$env:WINDIR\System32\regsvr32.exe" -ArgumentList @('/u', '/s', ('"{0}"' -f $dll)) -PassThru -Wait -WindowStyle Hidden
+        if ($unregistration.ExitCode -ne 0) { throw "Srabon TSF unregistration failed (regsvr32 exit $($unregistration.ExitCode))." }
     }
 }

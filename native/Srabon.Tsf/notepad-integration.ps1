@@ -1,5 +1,17 @@
 $ErrorActionPreference = 'Stop'
-Add-Type -AssemblyName System.Windows.Forms
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class SrabonTestInput {
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr window);
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+    [DllImport("user32.dll")] public static extern void keybd_event(byte virtualKey, byte scanCode, uint flags, UIntPtr extraInfo);
+    public static void Down(byte key) { keybd_event(key, 0, 0, UIntPtr.Zero); }
+    public static void Up(byte key) { keybd_event(key, 0, 2, UIntPtr.Zero); }
+    public static void Tap(byte key) { Down(key); Up(key); }
+}
+'@
 
 $dll = Join-Path $PWD 'build/native/Srabon.Tsf/Release/Srabon.Tsf.dll'
 $activator = Join-Path $PWD 'build/native/Srabon.Tsf/Release/Srabon.Tsf.Activate.exe'
@@ -30,14 +42,24 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Could not activate Srabon profile in the desktop session (exit $LASTEXITCODE)." }
     Start-Sleep -Milliseconds 500
     if (-not $shell.AppActivate($window.Id)) { throw 'Could not focus the Notepad window.' }
+    [void][SrabonTestInput]::SetForegroundWindow($window.MainWindowHandle)
     Start-Sleep -Milliseconds 300
+    $foreground = [SrabonTestInput]::GetForegroundWindow()
+    [uint32]$foregroundProcess = 0
+    [void][SrabonTestInput]::GetWindowThreadProcessId($foreground, [ref]$foregroundProcess)
+    if ($foregroundProcess -ne $window.Id) { throw "Notepad did not retain foreground focus (foreground PID $foregroundProcess, expected $($window.Id))." }
 
-    [System.Windows.Forms.SendKeys]::SendWait('ami banglay likhi ')
-    [System.Windows.Forms.SendKeys]::SendWait('s')
-    [System.Windows.Forms.SendKeys]::SendWait('{UP}')
-    [System.Windows.Forms.SendKeys]::SendWait(' ')
+    foreach ($character in 'ami banglay likhi '.ToCharArray()) {
+        if ($character -eq ' ') { [SrabonTestInput]::Tap(0x20) }
+        else { [SrabonTestInput]::Tap([byte][char]::ToUpperInvariant($character)) }
+    }
+    [SrabonTestInput]::Tap(0x53) # S: candidate with two choices
+    [SrabonTestInput]::Tap(0x26) # Up: select the second candidate
+    [SrabonTestInput]::Tap(0x20) # Space: commit
     Start-Sleep -Milliseconds 300
-    [System.Windows.Forms.SendKeys]::SendWait('^s')
+    [SrabonTestInput]::Down(0x11) # Ctrl+S saves the Notepad test document.
+    [SrabonTestInput]::Tap(0x53)
+    [SrabonTestInput]::Up(0x11)
     Start-Sleep -Seconds 1
     $actual = [System.IO.File]::ReadAllText($testFile)
     $actual = $actual.TrimEnd([char[]]@([char]13, [char]10))

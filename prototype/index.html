@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Srabon — Converter Harness</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="masthead">
+      <div>
+        <p class="wordmark">Srabon<span class="period">.</span></p>
+        <p class="eyebrow">EARLY TEST HARNESS</p>
+      </div>
+      <span class="status"><span class="status-dot" aria-hidden="true"></span> Local conversion</span>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <p class="kicker">BASIC · STAGE 1</p>
+      <h1 id="page-title">Bangla typing, made simple.</h1>
+      <p class="lede">Try the small, deterministic Roman-to-Bangla converter. Everything runs locally in this page.</p>
+    </section>
+
+    <section class="workspace" aria-label="Converter">
+      <div class="panel input-panel">
+        <div class="panel-heading">
+          <label for="roman-input">Roman input</label>
+          <span class="micro-label">PHONETIC</span>
+        </div>
+        <textarea id="roman-input" rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="input-help" placeholder="Type Roman text…">ami banglay likhi</textarea>
+        <div class="input-footer">
+          <span id="input-help">Try <code>ami banglay likhi</code> or <code>salam</code>.</span>
+          <button id="sample-button" class="text-button" type="button">Load sample</button>
+        </div>
+      </div>
+
+      <div class="conversion-mark" aria-hidden="true">↓</div>
+
+      <div class="panel output-panel">
+        <div class="panel-heading">
+          <h2>Bangla output</h2>
+          <span id="selection-label" class="micro-label">CANDIDATE 1</span>
+        </div>
+        <output id="bangla-output" class="bangla-output" lang="bn" aria-live="polite">আমি বাংলায় লিখি</output>
+        <p class="output-note">Preview only · output is not inserted into another application</p>
+      </div>
+
+      <section class="candidate-section" aria-labelledby="candidate-heading">
+        <div class="candidate-heading-row">
+          <div>
+            <h2 id="candidate-heading">Transliteration candidates</h2>
+            <p>Alternatives for this exact Roman input—not predictive suggestions.</p>
+          </div>
+          <span id="candidate-count" class="count-pill">1 candidate</span>
+        </div>
+        <div id="candidate-list" class="candidate-list" role="group" aria-label="Bangla transliteration candidates"></div>
+      </section>
+    </section>
+
+    <aside class="prototype-note" aria-label="Prototype scope">
+      <span class="note-icon" aria-hidden="true">i</span>
+      <p><strong>Prototype scope.</strong> This harness validates a narrow rule table and candidate selection. It is not a Windows input method, does not type into other apps, and does not claim broad transliteration accuracy.</p>
+    </aside>
+
+    <footer class="footer">
+      <span>Srabon · converter prototype</span>
+      <span>No network · no account · no clipboard access</span>
+    </footer>
+  </main>
+  <script src="converter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -2,4 +2,8 @@
 
 A Windows desktop Bangla phonetic typing application.
 
-The current repository contains the consolidated [design handoff](docs/design/README.md) for the Basic release. The handoff records approved visual direction, provisional design tokens, core screens and flows, and unresolved implementation dependencies. It does not claim that application behavior has been implemented or validated.
+## Current prototype
+
+Stage 1 is an offline, browser-openable [Roman-to-Bangla converter harness](prototype/index.html). See the [prototype instructions](prototype/README.md) for running the UI and Node.js tests. It is not a Windows executable or a system-wide input method.
+
+Stage 2, the native Windows TSF input-method prototype, has not been implemented or verified. The merged [design handoff](docs/design/README.md) remains in place and describes the intended Basic-release direction and unresolved product decisions.

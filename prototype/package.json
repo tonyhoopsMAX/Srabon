@@ -1,0 +1,9 @@
+{
+  "name": "srabon-converter-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline, deterministic Roman-to-Bangla converter test harness",
+  "scripts": {
+    "test": "node --test tests/converter.test.js"
+  }
+}

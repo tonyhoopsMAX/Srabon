@@ -38,6 +38,17 @@ int wmain() {
         hr = profiles->ActivateProfile(TF_PROFILETYPE_INPUTPROCESSOR, kBanglaBangladesh,
             CLSID_SrabonTextService, GUID_SrabonBanglaProfile, nullptr,
             TF_IPPMF_FORSESSION | TF_IPPMF_ENABLEPROFILE);
+        if (SUCCEEDED(hr)) {
+            TF_INPUTPROCESSORPROFILE active{};
+            const HRESULT activeHr = profiles->GetActiveProfile(GUID_TFCAT_TIP_KEYBOARD, &active);
+            if (SUCCEEDED(activeHr) && active.clsid != CLSID_SrabonTextService) {
+                std::fwprintf(stderr, L"Active keyboard TIP after activation: langid 0x%04x, CLSID differs from Srabon.\n", active.langid);
+                hr = E_FAIL;
+            } else if (FAILED(activeHr)) {
+                std::fwprintf(stderr, L"Could not read the active keyboard TIP: 0x%08lx\n", activeHr);
+                hr = activeHr;
+            }
+        }
         profiles->Release();
     }
     if (threadManager) {

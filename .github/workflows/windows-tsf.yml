@@ -1,0 +1,51 @@
+name: Windows TSF feasibility
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-tsf-x64:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure native TSF project
+        run: cmake -S native/Srabon.Tsf -B build/native/Srabon.Tsf -A x64
+
+      - name: Build x64 TSF DLL, unit tests, and profile activator
+        run: cmake --build build/native/Srabon.Tsf --config Release --parallel
+
+      - name: Run native converter regression tests
+        run: ctest --test-dir build/native/Srabon.Tsf -C Release --output-on-failure
+
+      - name: Stage x64 feasibility package
+        shell: pwsh
+        run: |
+          $stage = Join-Path $PWD 'artifacts/srabon-tsf-x64'
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          Copy-Item 'build/native/Srabon.Tsf/Release/Srabon.Tsf.dll' $stage
+          Copy-Item 'native/Srabon.Tsf/Install.ps1' $stage
+          Copy-Item 'native/Srabon.Tsf/Uninstall.ps1' $stage
+          Copy-Item 'native/Srabon.Tsf/README.md' $stage
+          Compress-Archive -Path (Join-Path $stage '*') -DestinationPath 'artifacts/srabon-tsf-feasibility-x64.zip' -Force
+
+      - name: Upload unsigned TSF feasibility package
+        uses: actions/upload-artifact@v4
+        with:
+          name: srabon-tsf-feasibility-x64
+          path: artifacts/srabon-tsf-feasibility-x64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Exercise registration, activation, typing, and candidate commit in Notepad
+        shell: pwsh
+        run: ./native/Srabon.Tsf/notepad-integration.ps1

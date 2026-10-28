@@ -25,6 +25,9 @@ try {
     if ($registration.ExitCode -ne 0) { throw "Srabon TSF registration failed (regsvr32 exit $($registration.ExitCode))." }
     $registered = $true
 
+    & $activator
+    if ($LASTEXITCODE -ne 0) { throw "Could not activate Srabon profile in the desktop session (exit $LASTEXITCODE)." }
+
     $testFile = Join-Path $env:TEMP "Srabon-Tsf-$PID.txt"
     [System.IO.File]::WriteAllText($testFile, '')
     $notepad = Start-Process -FilePath "$env:WINDIR\System32\notepad.exe" -ArgumentList ('"{0}"' -f $testFile) -PassThru
@@ -38,8 +41,6 @@ try {
     }
     if (-not $window) { throw 'Notepad did not expose a desktop window.' }
 
-    & $activator
-    if ($LASTEXITCODE -ne 0) { throw "Could not activate Srabon profile in the desktop session (exit $LASTEXITCODE)." }
     Start-Sleep -Milliseconds 500
     if (-not $shell.AppActivate($window.Id)) { throw 'Could not focus the Notepad window.' }
     [void][SrabonTestInput]::SetForegroundWindow($window.MainWindowHandle)
@@ -48,12 +49,6 @@ try {
     [uint32]$foregroundProcess = 0
     [void][SrabonTestInput]::GetWindowThreadProcessId($foreground, [ref]$foregroundProcess)
     if ($foregroundProcess -ne $window.Id) { throw "Notepad did not retain foreground focus (foreground PID $foregroundProcess, expected $($window.Id))." }
-    # InstallLayoutOrTip enabled the profile; switch the focused Notepad thread to it as a user would.
-    [SrabonTestInput]::Down(0x5B) # Left Windows key
-    [SrabonTestInput]::Tap(0x20)  # Win+Space cycles to Srabon Bangla Phonetic
-    [SrabonTestInput]::Up(0x5B)
-    Start-Sleep -Milliseconds 500
-
     foreach ($character in 'ami banglay likhi '.ToCharArray()) {
         if ($character -eq ' ') { [SrabonTestInput]::Tap(0x20) }
         else { [SrabonTestInput]::Tap([byte][char]::ToUpperInvariant($character)) }

@@ -109,7 +109,9 @@ public:
         *eaten = FALSE;
         return S_OK;
     }
-    STDMETHODIMP OnKeyDown(ITfContext* context, WPARAM key, LPARAM) override {
+    STDMETHODIMP OnKeyDown(ITfContext* context, WPARAM key, LPARAM, BOOL* eaten) override {
+        if (!eaten) return E_POINTER;
+        *eaten = FALSE;
         if (!context) return E_INVALIDARG;
         EditSession::Action action;
         wchar_t value = 0;
@@ -119,9 +121,15 @@ public:
         else if (key == VK_DOWN && HasComposition()) action = EditSession::Action::Next;
         else if (HasComposition() && IsCommitKey(key)) { action = EditSession::Action::Commit; value = CommitCharacter(key); }
         else return S_OK;
-        return RequestEdit(context, action, value);
+        const HRESULT hr = RequestEdit(context, action, value);
+        *eaten = SUCCEEDED(hr);
+        return hr;
     }
-    STDMETHODIMP OnKeyUp(ITfContext*, WPARAM, LPARAM) override { return S_OK; }
+    STDMETHODIMP OnKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* eaten) override {
+        if (!eaten) return E_POINTER;
+        *eaten = FALSE;
+        return S_OK;
+    }
     STDMETHODIMP OnPreservedKey(ITfContext*, REFGUID, BOOL* eaten) override {
         if (!eaten) return E_POINTER;
         *eaten = FALSE;
@@ -385,7 +393,7 @@ HRESULT RegisterTip() {
     }
     if (FAILED(hr)) { UnregisterTip(); return hr; }
     ITfInputProcessorProfileMgr* profiles = nullptr;
-    hr = CoCreateInstance(CLSID_TF_InputProcessorProfileMgr, nullptr, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfileMgr, reinterpret_cast<void**>(&profiles));
+    hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfileMgr, reinterpret_cast<void**>(&profiles));
     if (SUCCEEDED(hr)) {
         constexpr wchar_t description[] = L"Srabon Bangla Phonetic";
         hr = profiles->RegisterProfile(CLSID_SrabonTextService, kBanglaBangladesh, GUID_SrabonBanglaProfile,

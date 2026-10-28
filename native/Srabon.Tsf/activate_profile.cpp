@@ -3,7 +3,7 @@
 #include <msctf.h>
 #include <objbase.h>
 
-#include <cstdio>
+#include <cwchar>
 
 namespace {
 constexpr LANGID kBanglaBangladesh = 0x0845;
@@ -15,7 +15,7 @@ int wmain() {
     const HRESULT init = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(init)) { std::fwprintf(stderr, L"COM initialization failed: 0x%08lx\n", init); return 1; }
     ITfInputProcessorProfileMgr* profiles = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_TF_InputProcessorProfileMgr, nullptr, CLSCTX_INPROC_SERVER,
+    HRESULT hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_INPROC_SERVER,
                                   IID_ITfInputProcessorProfileMgr, reinterpret_cast<void**>(&profiles));
     if (SUCCEEDED(hr)) {
         hr = profiles->ActivateProfile(TF_PROFILETYPE_INPUTPROCESSOR, kBanglaBangladesh,

@@ -14,17 +14,38 @@ const GUID GUID_SrabonBanglaProfile = {0x3a50fc20,0x2685,0x452a,{0x8a,0xdb,0xd2,
 int wmain() {
     const HRESULT init = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(init)) { std::fwprintf(stderr, L"COM initialization failed: 0x%08lx\n", init); return 1; }
+
+    ITfThreadMgr* threadManager = nullptr;
+    TfClientId clientId = TF_CLIENTID_NULL;
+    HRESULT hr = CoCreateInstance(CLSID_TF_ThreadMgr, nullptr, CLSCTX_INPROC_SERVER,
+                                  IID_ITfThreadMgr, reinterpret_cast<void**>(&threadManager));
+    if (SUCCEEDED(hr)) hr = threadManager->Activate(&clientId);
+
+    ITfInputProcessorProfiles* languageProfiles = nullptr;
+    if (SUCCEEDED(hr)) {
+        hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_INPROC_SERVER,
+                              IID_ITfInputProcessorProfiles, reinterpret_cast<void**>(&languageProfiles));
+    }
+    if (SUCCEEDED(hr)) hr = languageProfiles->ChangeCurrentLanguage(kBanglaBangladesh);
+    if (languageProfiles) languageProfiles->Release();
+
     ITfInputProcessorProfileMgr* profiles = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_INPROC_SERVER,
-                                  IID_ITfInputProcessorProfileMgr, reinterpret_cast<void**>(&profiles));
+    if (SUCCEEDED(hr)) {
+        hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_INPROC_SERVER,
+                              IID_ITfInputProcessorProfileMgr, reinterpret_cast<void**>(&profiles));
+    }
     if (SUCCEEDED(hr)) {
         hr = profiles->ActivateProfile(TF_PROFILETYPE_INPUTPROCESSOR, kBanglaBangladesh,
             CLSID_SrabonTextService, GUID_SrabonBanglaProfile, nullptr,
-            TF_IPPMF_FORSESSION | TF_IPPMF_ENABLEPROFILE | TF_IPPMF_DONTCARECURRENTINPUTLANGUAGE);
+            TF_IPPMF_FORSESSION | TF_IPPMF_ENABLEPROFILE);
         profiles->Release();
     }
+    if (threadManager) {
+        if (clientId != TF_CLIENTID_NULL) threadManager->Deactivate();
+        threadManager->Release();
+    }
     CoUninitialize();
-    if (FAILED(hr)) { std::fwprintf(stderr, L"Could not activate Srabon TSF profile: 0x%08lx\n", hr); return 2; }
+    if (FAILED(hr)) { std::fwprintf(stderr, L"Could not switch to Bengali (Bangladesh) and activate Srabon TSF profile: 0x%08lx\n", hr); return 2; }
     std::wprintf(L"Srabon Bangla profile activated for the current desktop session.\n");
     return 0;
 }

@@ -426,7 +426,7 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID) {
     return TRUE;
 }
 
-extern "C" __declspec(dllexport) HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void** object) {
+extern "C" HRESULT WINAPI SrabonDllGetClassObject(REFCLSID clsid, REFIID riid, void** object) {
     if (clsid != CLSID_SrabonTextService) return CLASS_E_CLASSNOTAVAILABLE;
     auto* factory = new (std::nothrow) ClassFactory();
     if (!factory) return E_OUTOFMEMORY;
@@ -434,14 +434,14 @@ extern "C" __declspec(dllexport) HRESULT WINAPI DllGetClassObject(REFCLSID clsid
     factory->Release();
     return hr;
 }
-extern "C" __declspec(dllexport) HRESULT WINAPI DllCanUnloadNow() { return g_objects == 0 && g_locks == 0 ? S_OK : S_FALSE; }
-extern "C" __declspec(dllexport) HRESULT WINAPI DllRegisterServer() {
+extern "C" HRESULT WINAPI SrabonDllCanUnloadNow() { return g_objects == 0 && g_locks == 0 ? S_OK : S_FALSE; }
+extern "C" HRESULT WINAPI SrabonDllRegisterServer() {
     const HRESULT init = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     const HRESULT hr = RegisterTip();
     if (SUCCEEDED(init)) CoUninitialize();
     return hr;
 }
-extern "C" __declspec(dllexport) HRESULT WINAPI DllUnregisterServer() {
+extern "C" HRESULT WINAPI SrabonDllUnregisterServer() {
     const HRESULT init = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     const HRESULT hr = UnregisterTip();
     if (SUCCEEDED(init)) CoUninitialize();

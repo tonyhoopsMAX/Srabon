@@ -1,0 +1,6 @@
+LIBRARY "Srabon.Tsf"
+EXPORTS
+    DllGetClassObject=SrabonDllGetClassObject
+    DllCanUnloadNow=SrabonDllCanUnloadNow
+    DllRegisterServer=SrabonDllRegisterServer
+    DllUnregisterServer=SrabonDllUnregisterServer

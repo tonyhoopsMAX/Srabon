@@ -48,6 +48,11 @@ try {
     [uint32]$foregroundProcess = 0
     [void][SrabonTestInput]::GetWindowThreadProcessId($foreground, [ref]$foregroundProcess)
     if ($foregroundProcess -ne $window.Id) { throw "Notepad did not retain foreground focus (foreground PID $foregroundProcess, expected $($window.Id))." }
+    # InstallLayoutOrTip enabled the profile; switch the focused Notepad thread to it as a user would.
+    [SrabonTestInput]::Down(0x5B) # Left Windows key
+    [SrabonTestInput]::Tap(0x20)  # Win+Space cycles to Srabon Bangla Phonetic
+    [SrabonTestInput]::Up(0x5B)
+    Start-Sleep -Milliseconds 500
 
     foreach ($character in 'ami banglay likhi '.ToCharArray()) {
         if ($character -eq ' ') { [SrabonTestInput]::Tap(0x20) }

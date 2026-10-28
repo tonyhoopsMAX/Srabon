@@ -1,0 +1,97 @@
+name: Windows desktop build
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-publish:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Set up Node.js for preserved converter tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore .NET projects
+        run: |
+          dotnet restore tests/Srabon.Converter.Tests/Srabon.Converter.Tests.csproj
+          dotnet restore src/Srabon.App/Srabon.App.csproj --runtime win-x64
+
+      - name: Run C# converter and candidate tests
+        run: dotnet run --project tests/Srabon.Converter.Tests/Srabon.Converter.Tests.csproj --configuration Release --no-restore
+
+      - name: Run existing JavaScript converter tests
+        run: npm test --prefix prototype
+
+      - name: Publish self-contained x64 Windows executable
+        run: >-
+          dotnet publish src/Srabon.App/Srabon.App.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --no-restore
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          --output artifacts/publish
+
+      - name: Verify published executable exists
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "artifacts/publish/Srabon.exe"
+          if (-not (Test-Path $exe)) { throw "Published executable missing: $exe" }
+          Get-Item $exe | Format-List FullName, Length
+
+      - name: Smoke-test native desktop window startup
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "artifacts/publish/Srabon.exe"
+          $process = Start-Process -FilePath $exe -PassThru
+          $windowFound = $false
+          try {
+            for ($attempt = 0; $attempt -lt 20; $attempt++) {
+              Start-Sleep -Milliseconds 500
+              $process.Refresh()
+              if ($process.HasExited) { throw "Srabon exited before opening its desktop window (exit $($process.ExitCode))." }
+              if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
+                $windowFound = $true
+                Write-Host "Srabon desktop window opened: $($process.MainWindowTitle)"
+                break
+              }
+            }
+            if (-not $windowFound) { throw "Srabon process stayed alive but did not expose a desktop main window." }
+          }
+          finally {
+            $process.Refresh()
+            if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
+          }
+
+      - name: Upload Windows executable artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: srabon-windows-x64
+          path: artifacts/publish/Srabon.exe
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Add artifact download link to run summary
+        shell: pwsh
+        run: |
+          "Download the self-contained x64 Windows executable: [srabon-windows-x64](${{ steps.upload.outputs.artifact-url }})" >> $env:GITHUB_STEP_SUMMARY
